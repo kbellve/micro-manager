@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}</ProjectGuid>
+    <ProjectGuid>{396C68A0-BF4E-4D0F-AC03-BA8C40E04577}</ProjectGuid>
     <RootNamespace>PrecisExcite</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>Toptica_iBeamSmartCW</ProjectName>
