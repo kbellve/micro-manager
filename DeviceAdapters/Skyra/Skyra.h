@@ -22,6 +22,13 @@
 #include <string>
 #include <map>
 
+#define MODULATION_STATUS 0
+#define MODULATION_ALL 1
+#define MODULATION_ANALOG 2
+#define MODULATION_DIGITAL 3
+#define MODULATION_INTERNAL 4
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Strings
 //
@@ -57,8 +64,10 @@ const char * const g_PropertySkyraAutostartStatus = "Autostart Status";
 const char * const g_PropertySkyraActive = "Active";
 const char * const g_PropertySkyraActiveStatus = "Active Status";
 
-const char * const g_PropertySkyraModulation = "Modulation";
 const char * const g_PropertySkyraModulationStatus = "Modulation Status";
+const char * const g_PropertySkyraAnalogModulation = "Analog Modulation";
+const char * const g_PropertySkyraDigitalModulation = "Digital Modulation";
+const char * const g_PropertySkyraInternalModulation = "Internal Modulation";
 
 const char * const g_PropertySkyraWavelength = "Wavelength";
 const char * const g_PropertySkyraLaserType = "Laser Type";
@@ -70,8 +79,12 @@ const char * const g_PropertySkyraLaserStatus = "Laser Status";
 const char * const g_PropertyActive = "Active";
 const char * const g_PropertyInactive = "Inactive";
 
-const char * const g_On = "On";
-const char * const g_Off = "Off";
+const char * const g_PropertyOn = "On";
+const char * const g_PropertyOff = "Off";
+
+const char * const g_PropertyEnabled = "Enabled";
+const char * const g_PropertyDisabled = "Disabled";
+
 const char * const g_Default_String = "Unknown";
 const char * const g_Default_Integer = "0";
 const char * const g_Default_Float = "0.00";
@@ -123,10 +136,11 @@ public:
 	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 	
 	int OnActive(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnActiveStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnModulationStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDigitalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAnalogModulation(MM::PropertyBase* pProp, MM::ActionType eAct);	
+	int OnInternalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -154,7 +168,7 @@ public:
     
     // base functions
 	std::string AutostartStatus();
-	std::string ModulationStatus();
+	std::string ModulationStatus(int mode=0);
 	std::string AnalogImpedanceStatus();
 	std::string GetPower (long &value );
 
@@ -167,8 +181,12 @@ public:
 private:
     bool bInitialized_;
     bool bBusy_;
-	bool bModulation_;
 	bool bImpedance_;
+	bool bModulation_;
+	bool bModulationStatus_;
+	bool bAnalogModulation_;
+	bool bDigitalModulation_;
+	bool bInternalModulation_;
 	long nPower_;
     long nMaxPower_;
 	long nSkyra_;
@@ -186,7 +204,6 @@ private:
 	std::string controlMode_;
 	std::string model_;
 	std::string autostartStatus_;
-	std::string modulationStatus_;
 	std::string impedanceStatus_;
 	std::string currentLaserType_;
 	std::string currentLaser_;
