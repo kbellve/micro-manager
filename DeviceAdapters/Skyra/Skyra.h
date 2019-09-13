@@ -22,8 +22,7 @@
 #include <string>
 #include <map>
 
-#define MODULATION_STATUS 0
-#define MODULATION_ALL 1
+#define MODULATION_STATUS 1
 #define MODULATION_ANALOG 2
 #define MODULATION_DIGITAL 3
 #define MODULATION_INTERNAL 4
@@ -129,8 +128,8 @@ public:
 
 	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPowerSet(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPowerOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -168,9 +167,10 @@ public:
     
     // base functions
 	std::string AutostartStatus();
-	std::string ModulationStatus(int mode=0);
+	std::string GetModulation(int modulation=0);
+	std::string SetModulation(int modulation=0, bool value = false);
 	std::string AnalogImpedanceStatus();
-	std::string GetPower (long &value );
+	std::string GetPowerOutput (long &value );
 
 	// Shutter API
     // ----------------
@@ -215,8 +215,8 @@ private:
     
 	int ConfirmIdentity();
     int GetState(int &value);
-    int SetPowerSetpoint(long requestedPowerSetpoint);
-    int GetPowerSetpoint(long& value);
+    std::string SetPowerSetpoint(long requestedPowerSetpoint);
+    std::string GetPowerSetpoint(long& value);
 
 	// Serial Port
 	std::string port_;
