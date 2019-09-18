@@ -1285,7 +1285,16 @@ std::string Skyra::AnalogImpedanceStatus() {
 
 int Skyra::SetOpen(bool open)
 {
-    return AllLasersOnOff((int) open);
+	//We should have different modes that turn on/off lasers
+	std::string answer;
+
+	if (nSkyra_) {
+		if (open) answer = SerialCommand(currentLaserID_ + "l1");
+		else answer = SerialCommand(currentLaserID_ + "l0");
+
+		return DEVICE_OK;
+	}
+	else return AllLasersOnOff((int) open);
 }
 
 int Skyra::GetOpen(bool& open)
