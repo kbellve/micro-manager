@@ -51,11 +51,15 @@ const char * const gPropertySkyraControlMode = "Control Mode";
 const char * const g_PropertySkyraAnalogImpedance = "Analog Impedance";
 const char * const g_PropertySkyraAnalogImpedanceStatus = "Analog Impedance Status";
 
-const char * const g_PropertySkyraCurrent = "Current (mA)";
-const char * const g_PropertySkyraCurrentOutput = "Output Current (mA)";
+const char * const g_PropertySkyraCurrent = "Current";
+const char * const g_PropertySkyraCurrentOutput = "Current Output";
+const char * const g_PropertySkyraCurrentSetting = "Current Setting";
+const char * const g_PropertySkyraCurrentHelp =  "Current Units are in mA";
 
-const char * const g_PropertySkyraPower =  "Power (mW)";
-const char * const g_PropertySkyraPowerOutput =  "Output Power (mW)";
+const char * const g_PropertySkyraPower =  "Power";
+const char * const g_PropertySkyraPowerOutput =  "Power Output";
+const char * const g_PropertySkyraPowerSetting =  "Power Setting";
+const char * const g_PropertySkyraPowerHelp =  "Power Units are in mW";
 
 const char * const g_PropertySkyraAutostart = "Autostart";
 const char * const g_PropertySkyraAutostartStatus = "Autostart Status";
@@ -63,10 +67,10 @@ const char * const g_PropertySkyraAutostartStatus = "Autostart Status";
 const char * const g_PropertySkyraActive = "Active";
 const char * const g_PropertySkyraActiveStatus = "Active Status";
 
-const char * const g_PropertySkyraModulationStatus = "Modulation Status";
-const char * const g_PropertySkyraAnalogModulation = "Analog Modulation";
-const char * const g_PropertySkyraDigitalModulation = "Digital Modulation";
-const char * const g_PropertySkyraInternalModulation = "Internal Modulation";
+const char * const g_PropertySkyraModulationStatus = "Modulation: Status";
+const char * const g_PropertySkyraAnalogModulation = "Modulation: Analog";
+const char * const g_PropertySkyraDigitalModulation = "Modulation: Digital ";
+const char * const g_PropertySkyraInternalModulation = "Modulation: Internal";
 
 const char * const g_PropertySkyraWavelength = "Wavelength";
 const char * const g_PropertySkyraLaserType = "Laser Type";
@@ -128,8 +132,13 @@ public:
 
 	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnPowerSet(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPowerOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPowerSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -140,9 +149,6 @@ public:
 	int OnDigitalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAnalogModulation(MM::PropertyBase* pProp, MM::ActionType eAct);	
 	int OnInternalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnAllLasers(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLaserHelp1(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -170,7 +176,14 @@ public:
 	std::string GetModulation(int modulation=0);
 	std::string SetModulation(int modulation=0, bool value = false);
 	std::string AnalogImpedanceStatus();
-	std::string GetPowerOutput (long &value );
+	
+	std::string SetPower(long value);
+	std::string GetPower(long &value);
+	std::string GetPowerSetting(long& value);
+   
+	std::string SetCurrent(long value);
+	std::string GetCurrent();
+	std::string GetCurrentSetting ();
 
 	// Shutter API
     // ----------------
@@ -188,6 +201,9 @@ private:
 	bool bDigitalModulation_;
 	bool bInternalModulation_;
 	long nPower_;
+	long nPowerSetting_;
+	long nCurrent_;
+	long nCurrenttSetting_;
     long nMaxPower_;
 	long nSkyra_;
 	std::string name_;
@@ -215,8 +231,6 @@ private:
     
 	int ConfirmIdentity();
     int GetState(int &value);
-    std::string SetPowerSetpoint(long requestedPowerSetpoint);
-    std::string GetPowerSetpoint(long& value);
 
 	// Serial Port
 	std::string port_;
