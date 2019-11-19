@@ -27,6 +27,20 @@
 #define MODULATION_DIGITAL 3
 #define MODULATION_INTERNAL 4
 
+//////////////////////////////////////////////////////////////////////////////
+// Struct
+//
+
+struct Lasers {
+	std::string waveLength;
+	long powerSetting;
+	std::string currentSetting;
+	std::string controlMode;
+	std::string active;
+	std::string laserType;
+	std::string laserID;  
+	int laserNumber; // int version of LaserID
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // Strings
@@ -88,9 +102,10 @@ const char * const g_PropertyOff = "Off";
 const char * const g_PropertyEnabled = "Enabled";
 const char * const g_PropertyDisabled = "Disabled";
 
+const char * const g_Default_Empty = "";
 const char * const g_Default_String = "Unknown";
 const char * const g_Default_Integer = "0";
-const char * const g_Default_Float = "0.00";
+const char * const g_Default_Float = "0.0";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -177,13 +192,13 @@ public:
 	std::string SetModulation(int modulation=0, bool value = false);
 	std::string AnalogImpedanceStatus();
 	
-	std::string SetPower(long value);
-	std::string GetPower(long &value);
-	std::string GetPowerSetting(long& value);
+	std::string SetPower(long value, std::string laserid);
+	std::string GetPowerOutput(long &value, std::string laserid);
+	std::string GetPowerSetting(long& value, std::string laserid);
    
 	std::string SetCurrent(long value);
 	std::string GetCurrent();
-	std::string GetCurrentSetting ();
+	//std::string GetCurrentSetting ();
 
 	// Shutter API
     // ----------------
@@ -200,34 +215,36 @@ private:
 	bool bAnalogModulation_;
 	bool bDigitalModulation_;
 	bool bInternalModulation_;
-	long nPower_;
-	long nPowerSetting_;
-	long nCurrent_;
-	long nCurrenttSetting_;
-    long nMaxPower_;
 	long nSkyra_;
 	std::string name_;
     std::string hours_;
 	std::string keyStatus_;
     std::string laserStatus_;
     std::string interlock_;  
-    std::string current_;
     std::string fault_;
 	std::string operatingStatus_;
 	std::string identity_;
     std::string serialNumber_;
     std::string version_;
-	std::string controlMode_;
+	
 	std::string model_;
 	std::string autostartStatus_;
 	std::string impedanceStatus_;
-	std::string currentLaserType_;
-	std::string currentLaser_;
+	
+	//global, but should be set to current laser if a Skyra
+	long currentLaserPowerSetting_;
+	std::string currentLaserCurrentSetting_;
 	std::string currentLaserID_;
+	std::string currentLaserType_;
+	std::string currentLaserWavelength_;
+	std::string currentLaserControlMode_;
 
+	// need this vector fro micromanager property drowndown
 	std::vector<std::string> waveLengths_;
-	std::vector<std::string> laserTypes_;
-	std::vector<std::string> IDs_;
+
+	std::vector<struct Lasers> Skyra_;
+	
+	struct Lasers *currentLaser_;
     
 	int ConfirmIdentity();
     int GetState(int &value);
