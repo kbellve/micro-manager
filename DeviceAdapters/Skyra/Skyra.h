@@ -32,14 +32,16 @@
 //
 
 struct Lasers {
-	std::string waveLength;
+	int laserNumber; // int version of LaserID
+	long power;
 	long powerSetting;
+	std::string current;
 	std::string currentSetting;
 	std::string controlMode;
 	std::string active;
 	std::string laserType;
 	std::string laserID;  
-	int laserNumber; // int version of LaserID
+	std::string waveLength;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -107,6 +109,8 @@ const char * const g_Default_String = "Unknown";
 const char * const g_Default_Integer = "0";
 const char * const g_Default_Float = "0.0";
 
+const char * const g_Default_ControlMode = "Constant Power";
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -130,7 +134,7 @@ public:
 
     void GetName(char* pszName) const;
     bool Busy();
-    int AllLasersOnOff(int);
+    int AllLasersOn(int);
 
 	// Automatic Serial Port Detection
 	bool SupportsDeviceDetection(void);
@@ -197,7 +201,7 @@ public:
 	std::string GetPowerSetting(long& value, std::string laserid);
    
 	std::string SetCurrent(long value);
-	std::string GetCurrent();
+	//std::string GetCurrent();
 	//std::string GetCurrentSetting ();
 
 	// Shutter API
@@ -232,19 +236,21 @@ private:
 	std::string impedanceStatus_;
 	
 	//global, but should be set to current laser if a Skyra
-	long currentLaserPowerSetting_;
-	std::string currentLaserCurrentSetting_;
-	std::string currentLaserID_;
-	std::string currentLaserType_;
-	std::string currentLaserWavelength_;
-	std::string currentLaserControlMode_;
+	long laserPower_;
+	long laserPowerSetting_;
+	std::string laserCurrent_;
+	std::string laserCurrentSetting_;
+	std::string laserID_;
+	std::string laserType_;
+	std::string laserWavelength_;
+	std::string laserControlMode_;
 
 	// need this vector fro micromanager property drowndown
 	std::vector<std::string> waveLengths_;
 
 	std::vector<struct Lasers> Skyra_;
 	
-	struct Lasers *currentLaser_;
+	struct Lasers *Laser_;
     
 	int ConfirmIdentity();
     int GetState(int &value);
