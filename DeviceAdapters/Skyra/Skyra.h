@@ -33,8 +33,9 @@
 
 struct Lasers {
 	int laserNumber; // int version of LaserID
-	long powerSetting;
-	std::string currentSetting;
+	long powerOn;
+	std::string currentOn;
+	std::string currentMaximum;
 	std::string currentOff;
 	std::string controlMode;
 	std::string active;
@@ -60,26 +61,30 @@ const char * const g_PropertySkyraAutostartHelp1 = "Off->On: If Autostart is ena
 const char * const g_PropertySkyraAutostartHelp2 = "Off->On: If Autostart is disabled, laser(s) will go directly to On";
 const char * const g_PropertySkyraAutostartHelp3 = "On->Off: If Autostart is enabled, the start-up sequence will Abort";
 const char * const g_PropertySkyraAutostartHelp4 = "On->Off: If Autostart is disabled, laser(s) will go directly to Off state";
-const char * const g_PropertySkyraCurrentOffHelp = "The current setting when the laser is off";
-const char * const g_PropertySkyraCurrentSettingtHelp = "The current setting when the laser is on";
-const char * const g_PropertySkyraCurrentHelp =  "Current Units are in mA";
-const char * const g_PropertySkyraPowerHelp =  "Power Units are in mW";
+
+const char * const g_PropertySkyraCurrentHelpOff = "Current is set to this when the laser is Off, in Constant Current Mode";
+const char * const g_PropertySkyraCurrentHelpOn = "Current is set to this when the laser is On, in Constant Current Mode";
+const char * const g_PropertySkyraCurrentHelp =  "mA";
+
+const char * const g_PropertySkyraPowerHelpOn = "Power is set this when the laser is On, in Constant Power Mode";
+const char * const g_PropertySkyraPowerHelp =  "mW";
 
 const char * const gPropertySkyraControlMode = "Control Mode";
 
 const char * const g_PropertySkyraAnalogImpedance = "Analog Impedance";
 const char * const g_PropertySkyraAnalogImpedanceStatus = "Analog Impedance Status";
 
-const char * const g_PropertySkyraCurrent = "Current";
-const char * const g_PropertySkyraCurrentSetting = "Current: Setting";
-const char * const g_PropertySkyraCurrentOutput = "Current: Output";
+const char * const g_PropertySkyraCurrent = "Current:";
+const char * const g_PropertySkyraCurrentOn = "Current: On";
+const char * const g_PropertySkyraCurrentMaximum = "Current: Maximum";
+const char * const g_PropertySkyraCurrentStatus = "Current: Status";
+\
 // The current that the laser should switched to when the laser is off
 const char * const g_PropertySkyraCurrentOff = "Current: Off";
 
-const char * const g_PropertySkyraPower =  "Power";
-const char * const g_PropertySkyraPowerOutput =  "Power: Output";
-const char * const g_PropertySkyraPowerSetting =  "Power: Setting";
-
+const char * const g_PropertySkyraPower =  "Power:";
+const char * const g_PropertySkyraPowerStatus =  "Power: Status";
+const char * const g_PropertySkyraPowerOn =  "Power: On";
 
 const char * const g_PropertySkyraAutostart = "Autostart";
 const char * const g_PropertySkyraAutostartStatus = "Autostart Status";
@@ -156,16 +161,14 @@ public:
 	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerHelp(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+	int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPowerOn(MM::PropertyBase* pProp, MM::ActionType eAct);
+		
 	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentHelp(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentOn(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCurrentOff(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentOffHelp(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -213,8 +216,8 @@ public:
 	std::string AnalogImpedanceStatus();
 	
 	std::string SetPower(long value, std::string laserid);
-	std::string GetPowerOutput(long &value, std::string laserid);
-	std::string GetPowerSetting(long& value, std::string laserid);
+	std::string GetPowerStatus(long &value, std::string laserid);
+	std::string GetPowerOn(long& value, std::string laserid);
    
 	std::string SetCurrent(long value);
 	//std::string GetCurrent();
@@ -254,10 +257,11 @@ private:
 	
 	//global, but should be set to current laser if a Skyra
 	long laserPower_;
-	long laserPowerSetting_;
+	long laserPowerOn_;
 	std::string laserCurrent_;
 	std::string laserCurrentOff_;
-	std::string laserCurrentSetting_;
+	std::string laserCurrentOn_;
+	std::string laserCurrentMaximum_;
 	std::string laserID_;
 	std::string laserType_;
 	std::string laserWavelength_;
