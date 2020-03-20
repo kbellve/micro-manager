@@ -36,7 +36,7 @@ struct Lasers {
 	long powerOn;
 	std::string currentOn;
 	std::string currentMaximum;
-	std::string currentOff;
+	std::string currentMinimum;
 	std::string controlMode;
 	std::string active;
 	std::string laserType;
@@ -62,7 +62,8 @@ const char * const g_PropertySkyraAutostartHelp2 = "Off->On: If Autostart is dis
 const char * const g_PropertySkyraAutostartHelp3 = "On->Off: If Autostart is enabled, the start-up sequence will Abort";
 const char * const g_PropertySkyraAutostartHelp4 = "On->Off: If Autostart is disabled, laser(s) will go directly to Off state";
 
-const char * const g_PropertySkyraCurrentHelpOff = "Current is set to this when the laser is Off, in Constant Current Mode";
+const char * const g_PropertySkyraCurrentHelpMinimum = "Current is set to this when the laser is Off in either Modulation or Shutter Modes";
+const char * const g_PropertySkyraCurrentHelpMaximum = "Current is set to this when the laser is On in either Modulation or Shutter Modes";
 const char * const g_PropertySkyraCurrentHelpOn = "Current is set to this when the laser is On, in Constant Current Mode";
 const char * const g_PropertySkyraCurrentHelp =  "mA";
 
@@ -80,7 +81,7 @@ const char * const g_PropertySkyraCurrentMaximum = "Current: Maximum";
 const char * const g_PropertySkyraCurrentStatus = "Current: Status";
 \
 // The current that the laser should switched to when the laser is off
-const char * const g_PropertySkyraCurrentOff = "Current: Off";
+const char * const g_PropertySkyracurrentMinimum = "Current: Minimum";
 
 const char * const g_PropertySkyraPower =  "Power:";
 const char * const g_PropertySkyraPowerStatus =  "Power: Status";
@@ -88,6 +89,7 @@ const char * const g_PropertySkyraPowerOn =  "Power: On";
 
 const char * const g_PropertySkyraAutostart = "Autostart";
 const char * const g_PropertySkyraAutostartStatus = "Autostart Status";
+const char * const g_PropertySkyraAutostartHelp = "Autostart needs to be disabled if a non-modulatable laser is used as a shutter";
 
 const char * const g_PropertySkyraActive = "Active";
 const char * const g_PropertySkyraActiveStatus = "Active Status";
@@ -129,7 +131,6 @@ const char * const g_Default_ControlMode = "Constant Power";
 #define ERR_DEVICE_NOT_FOUND		10000
 
 
-//class Skyra: public CGenericBase<Skyra>
 class Skyra: public CShutterBase<Skyra>
 {
 public:
@@ -168,7 +169,7 @@ public:
 	int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCurrentOn(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCurrentMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentOff(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OncurrentMinimum(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -259,7 +260,7 @@ private:
 	long laserPower_;
 	long laserPowerOn_;
 	std::string laserCurrent_;
-	std::string laserCurrentOff_;
+	std::string laserCurrentMinimum_;
 	std::string laserCurrentOn_;
 	std::string laserCurrentMaximum_;
 	std::string laserID_;
