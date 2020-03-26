@@ -81,7 +81,7 @@ const char * const g_PropertySkyraCurrentMaximum = "Current: Maximum";
 const char * const g_PropertySkyraCurrentStatus = "Current: Status";
 \
 // The current that the laser should switched to when the laser is off
-const char * const g_PropertySkyracurrentMinimum = "Current: Minimum";
+const char * const g_PropertySkyraCurrentMinimum = "Current: Minimum";
 
 const char * const g_PropertySkyraPower =  "Power:";
 const char * const g_PropertySkyraPowerStatus =  "Power: Status";
@@ -94,7 +94,7 @@ const char * const g_PropertySkyraAutostartHelp = "Autostart needs to be disable
 const char * const g_PropertySkyraActive = "Active";
 const char * const g_PropertySkyraActiveStatus = "Active Status";
 
-const char * const g_PropertySkyraModulationStatus = "Modulation: Status";
+const char * const g_PropertySkyraModulationStatus = "Modulation:";
 const char * const g_PropertySkyraAnalogModulation = "Modulation: Analog";
 const char * const g_PropertySkyraDigitalModulation = "Modulation: Digital ";
 const char * const g_PropertySkyraInternalModulation = "Modulation: Internal";
@@ -169,7 +169,7 @@ public:
 	int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCurrentOn(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCurrentMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OncurrentMinimum(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentMinimum(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -212,7 +212,7 @@ public:
 // Despite what the cobolt software shows, individual lasers in a Skyra doesn't have their own autostart setting
 //	std::string AutostartStatusSkyra();
 
-	std::string GetModulation(int modulation=0);
+	bool GetModulation(int modulation=0);
 	std::string SetModulation(int modulation=0, bool value = false);
 	std::string AnalogImpedanceStatus();
 	
