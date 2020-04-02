@@ -264,6 +264,28 @@ int Skyra::Initialize()
 	if (DEVICE_OK != nRet)
 		return nRet;
 
+	// even though this should be only set by OEM, users requested it. - kdb
+	// Also, individual lasers in a Skyra doesn't appear to support Autostart, despite documentation saying otherwise :(
+	// But make autostart available for those who can't modulate their lasers.
+	AutostartStatus();
+	pAct = new CPropertyAction (this, &Skyra::OnAutoStart);
+	nRet = CreateProperty(g_PropertySkyraAutostart, autostartStatus_.c_str(), MM::String, false, pAct);
+	if (nRet != DEVICE_OK)
+		return nRet;
+
+	SetAllowedValues(g_PropertySkyraAutostart, commands);
+	pAct = new CPropertyAction (this, &Skyra::OnAutoStartStatus);
+	nRet = CreateProperty(g_PropertySkyraAutostartStatus, autostartStatus_.c_str(), MM::String, true, pAct);
+	if (DEVICE_OK != nRet)
+		return nRet;
+
+	CreateProperty("Autostart: Help", g_PropertySkyraAutostartHelp, MM::String, true);
+	commands.clear();
+	commands.push_back(g_PropertyEnabled);
+	commands.push_back(g_PropertyDisabled);
+	SetAllowedValues(g_PropertySkyraAutostart, commands);
+
+
 	// This is where check if this is an actual Skyra, with multipe lasers.
 	std::string answer;
 
@@ -333,12 +355,6 @@ int Skyra::Initialize()
 	{
 		//check if Single Laser supports supports 'em' command, modulation mode
 		if (SerialCommand ("em").compare(g_Msg_UNSUPPORTED_COMMAND) == 0) bModulation_ = false;
-		else {
-			bModulation_ = true;
-			//
-			// SerialCommand ("cp").compare(g_Msg_UNSUPPORTED_COMMAND); // return to constant power mode, if 'em' worked.
-			// 
-		}
 	}
 
 	// POWER
@@ -451,40 +467,32 @@ int Skyra::Initialize()
 		pAct = new CPropertyAction (this, &Skyra::OnDigitalModulation);
 		CreateProperty(g_PropertySkyraDigitalModulation, g_PropertyDisabled, MM::String, false, pAct);
 
-		pAct = new CPropertyAction (this, &Skyra::OnInternalModulation);
-		CreateProperty(g_PropertySkyraInternalModulation, g_PropertyDisabled, MM::String, false, pAct);
-
 		commands.clear();
 		commands.push_back(g_PropertyEnabled);
 		commands.push_back(g_PropertyDisabled);
 
 		SetAllowedValues(g_PropertySkyraDigitalModulation, commands);
 		SetAllowedValues(g_PropertySkyraAnalogModulation, commands);
-		SetAllowedValues(g_PropertySkyraInternalModulation, commands);
 
-	} else {
-		// even though this should be only set by OEM, users requested it. - kdb
-		// Also, individual lasers in a Skyra doesn't appear to support Autostart, despite documentation saying otherwise :(
-		// But make autostart available for those who can't modulate their lasers.
-		commands.clear();
-		commands.push_back(g_PropertyEnabled);
-		commands.push_back(g_PropertyDisabled);
-		SetAllowedValues(g_PropertySkyraAutostart, commands);
-	}
+		if (nSkyra_) {
+			pAct = new CPropertyAction (this, &Skyra::OnInternalModulation);
+			CreateProperty(g_PropertySkyraInternalModulation, g_PropertyDisabled, MM::String, false, pAct);
+			SetAllowedValues(g_PropertySkyraInternalModulation, commands);
 
-	AutostartStatus();
-	pAct = new CPropertyAction (this, &Skyra::OnAutoStart);
-	nRet = CreateProperty(g_PropertySkyraAutostart, autostartStatus_.c_str(), MM::String, false, pAct);
-	if (nRet != DEVICE_OK)
-		return nRet;
+			CreateProperty(g_PropertySkyraInternalModulationHelp, g_PropertySkyraInternalModulationHelpUnits, MM::String, false);
 
-	SetAllowedValues(g_PropertySkyraAutostart, commands);
-	pAct = new CPropertyAction (this, &Skyra::OnAutoStartStatus);
-	nRet = CreateProperty(g_PropertySkyraAutostartStatus, autostartStatus_.c_str(), MM::String, true, pAct);
-	if (DEVICE_OK != nRet)
-		return nRet;
+			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationOn);
+			CreateProperty(g_PropertySkyraInternalModulationOn, g_PropertyOff, MM::Float, false, pAct);
 
-	CreateProperty("Autostart: Help", g_PropertySkyraAutostartHelp, MM::String, true);
+			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationPeriod);
+			CreateProperty(g_PropertySkyraInternalModulationPeriod, g_Default_Float, MM::Float, false, pAct);
+
+			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationDelay);
+			CreateProperty(g_PropertySkyraInternalModulationDelay, g_Default_Float, MM::Float, false, pAct);
+		}
+		
+
+	} 
 
 	// All GUI elements have now been created, lets update them from the laser.
 	if (nSkyra_) UpdateWaveLength(ID_);
@@ -1070,6 +1078,55 @@ int Skyra::OnDigitalModulation(MM::PropertyBase* pProp, MM::ActionType  eAct)
 
 	return DEVICE_OK;
 }
+int Skyra::OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType  eAct)
+{ 
+	std::string answer;
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(std::stof(SerialCommand(ID_ + "gswmo?")));
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(answer);
+		if (std::stof(answer) >= 0) SerialCommand(ID_ + "sswmo " + answer);
+	}
+
+	return DEVICE_OK;
+}
+int Skyra::OnInternalModulationDelay(MM::PropertyBase* pProp, MM::ActionType  eAct)
+{ 
+	std::string answer;
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(std::stof(SerialCommand(ID_ + "gswmod?")));
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(answer);
+		if (std::stof(answer) >= 0) SerialCommand(ID_ + "sswmod " + answer);
+	}
+
+	return DEVICE_OK;
+}
+int Skyra::OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType  eAct)
+{ 
+	std::string answer;
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(std::stof(SerialCommand(ID_ + "gswmp?")));
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(answer);
+		if (std::stof(answer) >= 0) SerialCommand(ID_ + "sswmp " + answer);
+	}
+
+	return DEVICE_OK;
+}
+
 int Skyra::OnInternalModulation(MM::PropertyBase* pProp, MM::ActionType  eAct)
 { 
 	std::string answer;
