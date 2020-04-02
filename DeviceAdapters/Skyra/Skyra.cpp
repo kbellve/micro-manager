@@ -6,7 +6,8 @@
 // DESCRIPTION:   Controls Cobolt and Skyra lasers through a serial port
 // COPYRIGHT:     University of Massachusetts Medical School, 2019
 // LICENSE:       LGPL
-// AUTHORS:       Karl Bellve, Karl.Bellve@umassmed.edu, Karl.Bellve@gmail.com
+// LICENSE:       https://www.gnu.org/licenses/lgpl-3.0.txt
+// AUTHOR:        Karl Bellve, Karl.Bellve@umassmed.edu, Karl.Bellve@gmail.com
 //               
 //
 
@@ -43,7 +44,6 @@ Skyra::Skyra() :
 bInitialized_(false),
 	bBusy_(false),
 	bModulation_(true),
-	//bModulationOn_(false),
 	bAnalogModulation_(false),
 	bDigitalModulation_(false),
 	bInternalModulation_(false),
@@ -152,7 +152,7 @@ MM::DeviceDetectionStatus Skyra::DetectDevice(void)
 	}
 	catch(...)
 	{
-		LogMessage("Exception in DetectDevice!",false);
+		//LogMessage("Exception in DetectDevice!",false);
 	}
 
 	return result;
@@ -198,7 +198,7 @@ int Skyra::Initialize()
 {   
 	CPropertyAction* pAct;
 
-	AllLasersOn(true);
+	//AllLasersOn(true);
 	pAct = new CPropertyAction (this, &Skyra::OnAllLasers);
 	int nRet = CreateProperty(g_PropertySkyraAllLaser, laserStatus_.c_str(), MM::String, false, pAct);
 	if (DEVICE_OK != nRet)
@@ -381,8 +381,8 @@ int Skyra::Initialize()
 	if (DEVICE_OK != nRet)
 		return nRet;
 
-	CreateProperty("Power: Units", g_PropertySkyraPowerHelp, MM::String, true);
-	CreateProperty("Power: On Help", g_PropertySkyraPowerHelpOn, MM::String, true);
+	CreateProperty("Power Units", g_PropertySkyraPowerHelp, MM::String, true);
+	CreateProperty("Power On Help", g_PropertySkyraPowerHelpOn, MM::String, true);
 
 	/// CURRENT
 	pAct = new CPropertyAction (this, &Skyra::OnCurrent);
@@ -415,10 +415,10 @@ int Skyra::Initialize()
 	if (DEVICE_OK != nRet)
 		return nRet;
 
-	CreateProperty("Current: Units", g_PropertySkyraCurrentHelp, MM::String, true);
-	CreateProperty("Current: Modulation Minimum Help", g_PropertySkyraCurrentModulationHelpMinimum, MM::String, true);
-	CreateProperty("Current: Modulation Maximum Help", g_PropertySkyraCurrentModulationHelpMaximum, MM::String, true);
-	CreateProperty("Current: On Help", g_PropertySkyraCurrentHelpOn, MM::String, true);
+	CreateProperty("Current Units", g_PropertySkyraCurrentHelp, MM::String, true);
+	CreateProperty("Current Modulation Minimum Help", g_PropertySkyraCurrentModulationHelpMinimum, MM::String, true);
+	CreateProperty("Current Modulation Maximum Help", g_PropertySkyraCurrentModulationHelpMaximum, MM::String, true);
+	CreateProperty("Current On Help", g_PropertySkyraCurrentHelpOn, MM::String, true);
 		
 
 	// check if Laser supports supports analog impedance
@@ -453,11 +453,6 @@ int Skyra::Initialize()
 	if (bModulation_ == true)  commands.push_back(gPropertySkyraControlModeModulation);
 	SetAllowedValues(gPropertySkyraControlMode, commands);  
 
-	//default to Constant Power Mode
-	//if (controlMode_.compare(gPropertySkyraControlModePower) == 0) SerialCommand(ID_ + "cp");
-	//else if (controlMode_.compare(gPropertySkyraControlModeConstant) == 0) SerialCommand(ID_ + "ci"); 
-	//else if (controlMode_.compare(gPropertySkyraControlModeModulation) == 0) SerialCommand(ID_ + "em"); 
-
 	// Modulation
 	if (bModulation_ == true) {
 
@@ -479,7 +474,7 @@ int Skyra::Initialize()
 			CreateProperty(g_PropertySkyraInternalModulation, g_PropertyDisabled, MM::String, false, pAct);
 			SetAllowedValues(g_PropertySkyraInternalModulation, commands);
 
-			CreateProperty(g_PropertySkyraInternalModulationHelp, g_PropertySkyraInternalModulationHelpUnits, MM::String, false);
+			CreateProperty(g_PropertySkyraInternalModulationHelp, g_PropertySkyraInternalModulationHelpUnits, MM::String, true);
 
 			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationOn);
 			CreateProperty(g_PropertySkyraInternalModulationOn, g_PropertyOff, MM::Float, false, pAct);
@@ -490,8 +485,6 @@ int Skyra::Initialize()
 			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationDelay);
 			CreateProperty(g_PropertySkyraInternalModulationDelay, g_Default_Float, MM::Float, false, pAct);
 		}
-		
-
 	} 
 
 	// All GUI elements have now been created, lets update them from the laser.
@@ -503,7 +496,7 @@ int Skyra::Initialize()
 
 	bInitialized_ = true;
 
-	LogMessage("Skyra::Initialize: Success", true);
+	//LogMessage("Skyra::Initialize: Success", true);
 
 	return DEVICE_OK;
 }
@@ -544,22 +537,6 @@ int Skyra::GetState(int &value )
 	return DEVICE_OK;
 
 }
-//std::string Skyra::GetPowerStatus (long &value, std::string laserid = "") 
-//{
-//	std::string answer;
-//
-//	answer = SerialCommand (laserid + "pa?");
-//
-//	float power = (float)atof(answer.c_str()) * 1000;
-//
-//	value = (long) power;
-//
-//	LogMessage ("Skyra::GetPowerStatus 1: " + laserid + " " + answer);
-//
-//	LogMessage ("Skyra::GetPowerStatus 2: " + laserid + " " + std::to_string((long double)power));
-//
-//	return answer;
-//}
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -603,19 +580,21 @@ int Skyra::OnControlMode(MM::PropertyBase* pProp, MM::ActionType  eAct)
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		pProp->Get(controlMode_);
-
-		if (controlMode_.compare(gPropertySkyraControlModePower) == 0) {
-			SerialCommand(ID_ + "cp");
-			Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
-		}
-		else if (controlMode_.compare(gPropertySkyraControlModeConstant) == 0) {
-			SerialCommand(ID_ + "ci");
-			Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
-		}
-		if (controlMode_.compare(gPropertySkyraControlModeModulation) == 0) {
-			SerialCommand(ID_ + "em");
-			Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyEnabled);
+		pProp->Get(answer);
+		if (controlMode_.compare(answer) != 0) {
+			controlMode_ = answer;
+			if (controlMode_.compare(gPropertySkyraControlModePower) == 0) {
+				SerialCommand(ID_ + "cp");
+				Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
+			}
+			else if (controlMode_.compare(gPropertySkyraControlModeConstant) == 0) {
+				SerialCommand(ID_ + "ci");
+				Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
+			}
+			if (controlMode_.compare(gPropertySkyraControlModeModulation) == 0) {
+				SerialCommand(ID_ + "em");
+				Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyEnabled);
+			}
 		}
 	}
 
@@ -661,14 +640,14 @@ int Skyra::OnActive(MM::PropertyBase* pProp, MM::ActionType  eAct)
 		answer = SerialCommand(ID_ + "gla? ");
 		if (answer.compare("0") == 0) pProp->Set(g_PropertyInactive);
 		if (answer.compare("1") == 0) pProp->Set(g_PropertyActive);
-		LogMessage("Skyra::OnActive 1 " + answer);
+		//LogMessage("Skyra::OnActive 1 " + answer);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		pProp->Get(answer);
 		if (answer.compare(g_PropertyActive) == 0) SerialCommand(ID_ + "sla 1");
 		if (answer.compare(g_PropertyInactive) == 0) SerialCommand(ID_ + "sla 0");
-		LogMessage("Skyra::OnActive 2" + answer);
+		//LogMessage("Skyra::OnActive 2" + answer);
 
 	}
 
@@ -710,7 +689,7 @@ int Skyra::OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct )
 		double value = stof(SerialCommand(ID_ + "p?")) * 1000; 
 		powerSetPoint_ = std::to_string((long double)value); 
 		pProp->Set(powerSetPoint_.c_str());
-		LogMessage("Skyra::OnPowerSetPoint " + powerSetPoint_,true);
+		//LogMessage("Skyra::OnPowerSetPoint " + powerSetPoint_,true);
 	} 
 
 	return DEVICE_OK;
@@ -813,7 +792,7 @@ int Skyra::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 					// Switch to Current regulated mode and then set Current Level
 					Skyra::SetProperty(gPropertySkyraControlMode,gPropertySkyraControlModeConstant);
 					Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
-					SetCurrent(Current_);
+					SerialCommand (ID_ + "slc " + Current_);
 				}
 			}
 		}
@@ -824,6 +803,7 @@ int Skyra::OnCurrentSetPoint(MM::PropertyBase*  pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet)
 	{
+		// not sure of this command works on a non Skyra
 		if (nSkyra_) currentSetPoint_ = SerialCommand (ID_ + "glc?");
 		pProp->Set(currentSetPoint_.c_str());
 	} 
@@ -869,7 +849,7 @@ int Skyra::OnCurrentModulationMinimum(MM::PropertyBase* pProp, MM::ActionType eA
 		currentModulationMaximum_ = SerialCommand (ID_ + "gmc?");
 
 		MM::Property* pChildProperty = (MM::Property*)pProp;
-		if (Type_.compare("DPL1") == 0) pChildProperty->SetReadOnly(false);
+		if (Type_.compare(0,3,"DPL") == 0) pChildProperty->SetReadOnly(false);
 		else {
 			pChildProperty->SetReadOnly(true);
 			currentModulationMinimum_ = "0";
@@ -1017,16 +997,6 @@ int Skyra::OnWaveLength(MM::PropertyBase* pProp, MM::ActionType  eAct)
 	}
 	return DEVICE_OK;
 }
-//int Skyra::OnModulationStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
-//{
-//	if (eAct == MM::BeforeGet)
-//	{
-//		if (bModulationOn_) pProp->Set(g_PropertyEnabled);
-//		else pProp->Set(g_PropertyDisabled);
-//	}
-//
-//	return DEVICE_OK;
-//}
 int Skyra::OnAnalogModulation(MM::PropertyBase* pProp, MM::ActionType  eAct)
 { 
 	std::string answer;
@@ -1178,9 +1148,10 @@ int Skyra::OnAllLasers(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	std::string answer;
 
-	if (eAct == MM::BeforeGet)
-	{
-
+	if (eAct == MM::BeforeGet) {
+		answer = SerialCommand(ID_ + "l?");
+		if (answer.compare("1") == 0) pProp->Set(g_PropertyOn);
+		else pProp->Set(g_PropertyOff);
 	}
 	else if (eAct == MM::AfterSet)
 	{
@@ -1200,33 +1171,34 @@ int Skyra::OnAllLasers(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Skyra::OnLaser(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	// This property is only shown if an actual Skyra
-
 	std::string answer;
 	if (eAct == MM::BeforeGet)
 	{
-
-		if (bOn_)
+		answer = SerialCommand(ID_ + "l?");  
+		if (answer.compare("1") == 0)
 		{
 			pProp->Set(g_PropertyOn);
+			bOn_ = true;
 		}
 		else
 		{
 			pProp->Set(g_PropertyOff);
+			bOn_ = false;
 		}
-
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		pProp->Get(answer);
 		if (answer.compare(g_PropertyOn) == 0)
 		{
-			SerialCommand(ID_ + "l1");  
+			SerialCommand(ID_ + "l1");
+			bOn_ = true;
 		}
 		else
 		{
-			SerialCommand(ID_ + "l0");  
+			SerialCommand(ID_ + "l0"); 
+			bOn_ = false;
 		}
-
 	}
 	return DEVICE_OK;
 } 
@@ -1254,58 +1226,6 @@ int Skyra::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 // Base Calls  
 ///////////////////////////////////////////////////////////////////////////////
-/*
-std::string Skyra::GetCurrentSetting() 
-{
-// returns in mAmps.
-std::string answer;
-
-answer = SerialCommand (ID_ +"glc?");
-if (answer.compare(g_Default_Float) != 0) 
-{
-currentSetPoint_ = answer;
-if (Laser_) Laser_->currentOn = answer;
-}
-
-LogMessage("Skyra::GetCurrentSetting() "  + answer);
-return answer;
-
-} */
-/*
-std::string Skyra::GetCurrent() 
-{
-
-std::string answer;
-
-answer = SerialCommand(ID_ + "i? ");
-
-return answer;
-
-}
-*/
-std::string Skyra::SetCurrent(std::string current)
-{
-	std::string answer;
-
-	answer = SerialCommand (ID_ + "slc " + current);
-
-	return answer;
-}
-//std::string Skyra::GetPowerOn(long& value, std::string laserid = "")
-//{
-//	// returns in Watts
-//	double result = 0.0;
-//	std::string answer;
-//
-//	answer = SerialCommand (laserid +"p?");
-//
-//   	LogMessage("Skyra::GetPowerOn: " + laserid + " " + answer, true);
-//
-//	result = atof(answer.c_str()) * 1000;
-//	value  = (long)result;
-//
-//	return answer;
-//}
 std::string Skyra::SetPower(std::string requestedPowerSetpoint, std::string laserid = "")
 {
 	std::string answer;
@@ -1314,7 +1234,7 @@ std::string Skyra::SetPower(std::string requestedPowerSetpoint, std::string lase
 
 	answer = SerialCommand (ID_ + "p " + std::to_string((long double)dPower));
 
-	LogMessage("SetPower: " + ID_ + std::to_string((long double)dPower));
+	//LogMessage("SetPower: " + ID_ + std::to_string((long double)dPower));
 
 	return answer;
 }
@@ -1333,9 +1253,6 @@ std::string Skyra::AutostartStatus() {
 }
 std::string Skyra::SetModulation(int modulation, bool value) 
 {
-
-
-
 	std::string answer;
 
 	// Analog and Digital can be active at the same time, but Internal must only be activated by itself
@@ -1387,12 +1304,15 @@ std::string Skyra::UpdateWaveLength(std::string id)
 	// RASP
 	Skyra::SetProperty(g_PropertySkyraCurrentOn,currentSetPoint_.c_str());
 
+	// Current Maximum
 	currentMaximum_ = SerialCommand (ID_ + "gmlc?");
 	Skyra::SetProperty(g_PropertySkyraCurrentMaximum,currentModulationMaximum_.c_str());
-
+	
+	// Current Modulation Maximum
 	currentModulationMaximum_ = SerialCommand (ID_ + "gmc?");
 	Skyra::SetProperty(g_PropertySkyraCurrentModulationMaximum,currentModulationMaximum_.c_str());
 
+	// Current Modulation Minimum
 	currentModulationMinimum_ = SerialCommand (ID_ + "glth?");
 	Skyra::SetProperty(g_PropertySkyraCurrentModulationMinimum,currentModulationMinimum_.c_str());
 			 
@@ -1402,12 +1322,15 @@ std::string Skyra::UpdateWaveLength(std::string id)
 	// update Power Setting -- RASP
 	Skyra::SetProperty(g_PropertySkyraPowerOn,powerSetPoint_.c_str());
 
+	// Power Maximum
 	powerMaximum_ = SerialCommand (ID_ + "gmlc?");
 	Skyra::SetProperty(g_PropertySkyraCurrentMaximum,powerMaximum_.c_str());
 
 	// Laser Type
 	// get default type if not Skyra
 	Type_ = SerialCommand(id + "glm?");
+	if (Type_.length() > 3) Type_.resize(3);
+
 	Skyra::SetProperty(g_PropertySkyraLaserType,Type_.c_str());
 
 	// update active status
@@ -1419,9 +1342,6 @@ std::string Skyra::UpdateWaveLength(std::string id)
 	Skyra::SetProperty(gPropertySkyraControlMode, controlMode_.c_str());
 
 	// update modulation status
-	/*if (bModulationOn_) Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyEnabled);
-	else Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);*/
-				
 	if (bAnalogModulation_) Skyra::SetProperty(g_PropertySkyraAnalogModulation, g_PropertyEnabled);
 	else Skyra::SetProperty(g_PropertySkyraAnalogModulation, g_PropertyDisabled);
 
@@ -1449,7 +1369,7 @@ std::string Skyra::GetRASP(std::string laserID) {
 		// Position 1: Unknown
 		// 
 		pch = strtok (tempstr_, " ");
-		if (pch != NULL) LogMessage("Skyra::GetReadAll: Unknown " + *pch, true);
+		if (pch != NULL) //LogMessage("Skyra::GetReadAll: Unknown " + *pch, true);
 		//}
 
 		//
@@ -1458,7 +1378,7 @@ std::string Skyra::GetRASP(std::string laserID) {
 		pch = strtok (NULL, " ");
 		if (pch != NULL) {
 			currentSetPoint_ = pch;
-			LogMessage("Skyra::GetReadAll: Current Set " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: Current Set " + *pch, true);
 		}
 
 		//
@@ -1467,7 +1387,7 @@ std::string Skyra::GetRASP(std::string laserID) {
 		pch = strtok (NULL, " ");
 		if (pch != NULL) {
 			powerSetPoint_ = pch;
-			LogMessage("Skyra::GetReadAll: Power Set " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: Power Set " + *pch, true);
 		}
 	}
 
@@ -1507,10 +1427,11 @@ std::string Skyra::GetReadAll(std::string laserID) {
 		// 
 		if (pch != NULL) {
 			Type_ = SerialCommand (ID_ + "glm?");
-			if (Type_.compare("DPL1") == 0) { 
+			if (Type_.length() > 3) Type_.resize(3);
+			if (Type_.compare("DPL") == 0) { 
 				photoDiode_ = pch;
 				pch = strtok (NULL, " ");
-				LogMessage("Skyra::GetReadAll: PV " + *pch, true);
+				//LogMessage("Skyra::GetReadAll: PV " + *pch, true);
 			}
 		}
 		
@@ -1520,7 +1441,7 @@ std::string Skyra::GetReadAll(std::string laserID) {
 		//
 		if (pch != NULL) {
 			currentStatus_ = *pch;
-			LogMessage("Skyra::GetReadAll: Current " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: Current " + *pch, true);
 		}
 		
 		//
@@ -1529,7 +1450,7 @@ std::string Skyra::GetReadAll(std::string laserID) {
 		pch = strtok (NULL, " ");
 		if (pch != NULL) {
 			powerStatus_ = pch;
-			LogMessage("Skyra::GetReadAll: Power " + *pch, true); 
+			//LogMessage("Skyra::GetReadAll: Power " + *pch, true); 
 		}
 
 		//
@@ -1539,7 +1460,7 @@ std::string Skyra::GetReadAll(std::string laserID) {
 		if (pch != NULL) {
 			if (strcmp(pch,"1") == 0) bOn_ = true;
 			else bOn_ = false;
-			LogMessage("Skyra::GetReadAll: On " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: On " + *pch, true);
 		}
 		
 		//
@@ -1550,7 +1471,7 @@ std::string Skyra::GetReadAll(std::string laserID) {
 			if (pch[0] == '0') controlMode_ = gPropertySkyraControlModeConstant;
 			if (pch[0] == '1')  controlMode_= gPropertySkyraControlModePower;
 			if (pch[0] == '2')  controlMode_ = gPropertySkyraControlModeModulation;
-			LogMessage("Skyra::GetReadAll: Control Mode " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: Control Mode " + *pch, true);
 		} 
 
 		//
@@ -1558,7 +1479,7 @@ std::string Skyra::GetReadAll(std::string laserID) {
 		//
 		pch = strtok (NULL, " ");
 		if (pch != NULL) {
-			LogMessage("Skyra::GetReadAll: Unknown " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: Unknown " + *pch, true);
 		}
 		
 		//
@@ -1570,7 +1491,7 @@ std::string Skyra::GetReadAll(std::string laserID) {
 			if (strcmp(pch,"1") == 0) bDigitalModulation_ = true;
 			if (strcmp(pch,"2") == 0) bAnalogModulation_ = true;
 			if (strcmp(pch,"3") == 0) bDigitalModulation_ = bAnalogModulation_ = true;
-			LogMessage("Skyra::GetReadAll: Modulation Mode " + *pch, true);
+			//LogMessage("Skyra::GetReadAll: Modulation Mode " + *pch, true);
 		} 
 	}
 
@@ -1581,30 +1502,6 @@ std::string Skyra::GetReadAll(std::string laserID) {
 
 	return RA_;
 }
-//bool Skyra::GetModulation(int modulation) {
-//
-//	std::string answer;
-//
-//	if (modulation == MODULATION_ANALOG || modulation == MODULATION_STATUS) {
-//		answer = SerialCommand (ID_ + "games?");  
-//
-//		if (answer.at(0) == '1') return true;
-//	}
-//
-//	if (modulation == MODULATION_DIGITAL || modulation == MODULATION_STATUS) {
-//		answer = SerialCommand (ID_ + "gdmes?");
-//
-//		if (answer.at(0) == '1') return true;
-//	}
-//
-//	if (modulation == MODULATION_INTERNAL || modulation == MODULATION_STATUS) {
-//		answer = SerialCommand (ID_ + "gswm?");
-//
-//		if (answer.at(0) == '1') return true;
-//	}
-//
-//	return false;
-//}
 std::string Skyra::AnalogImpedanceStatus() {
 
 	std::string answer;
