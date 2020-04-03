@@ -84,7 +84,6 @@ bInitialized_(false),
 
 	// Company Name
 	CreateProperty("Vendor", g_DeviceVendorName, MM::String, true);
-
 }
 Skyra::~Skyra()
 {
@@ -279,7 +278,7 @@ int Skyra::Initialize()
 	if (DEVICE_OK != nRet)
 		return nRet;
 
-	CreateProperty("Autostart: Help", g_PropertySkyraAutostartHelp, MM::String, true);
+	CreateProperty("Autostart Help", g_PropertySkyraAutostartHelp, MM::String, true);
 	commands.clear();
 	commands.push_back(g_PropertyEnabled);
 	commands.push_back(g_PropertyDisabled);
@@ -376,10 +375,16 @@ int Skyra::Initialize()
 	if (DEVICE_OK != nRet)
 		return nRet;
 
+	// Power Maximum
+	powerMaximum_ = SerialCommand (ID_ + "gmlp?");
 	pAct = new CPropertyAction (this, &Skyra::OnPowerMaximum);
-	nRet = CreateProperty(g_PropertySkyraPowerMaximum, g_Default_Float, MM::Float, true, pAct);
+	nRet = CreateProperty(g_PropertySkyraPowerMaximum, powerMaximum_.c_str(), MM::Float, true, pAct);
 	if (DEVICE_OK != nRet)
 		return nRet;
+	
+	// Set Property Limits for Power
+	double powerMaximum = std::stof(powerMaximum_);
+	SetPropertyLimits(g_PropertySkyraPower,0,powerMaximum);
 
 	CreateProperty("Power Units", g_PropertySkyraPowerHelp, MM::String, true);
 	CreateProperty("Power On Help", g_PropertySkyraPowerHelpOn, MM::String, true);
@@ -414,6 +419,13 @@ int Skyra::Initialize()
 	nRet = CreateProperty(g_PropertySkyraCurrentOn, g_Default_Float, MM::String, true, pAct);
 	if (DEVICE_OK != nRet)
 		return nRet;
+
+	// Set Property Limits for Current
+	currentMaximum_ = SerialCommand (ID_ + "gmlc?");
+	double currentMaximum = std::stof(currentMaximum_);
+	SetPropertyLimits(g_PropertySkyraCurrent,0,currentMaximum);
+	SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,currentMaximum);
+	SetPropertyLimits(g_PropertySkyraCurrentModulationMaximum,0,currentMaximum);
 
 	CreateProperty("Current Units", g_PropertySkyraCurrentHelp, MM::String, true);
 	CreateProperty("Current Modulation Minimum Help", g_PropertySkyraCurrentModulationHelpMinimum, MM::String, true);
@@ -477,13 +489,15 @@ int Skyra::Initialize()
 			CreateProperty(g_PropertySkyraInternalModulationHelp, g_PropertySkyraInternalModulationHelpUnits, MM::String, true);
 
 			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationOn);
-			CreateProperty(g_PropertySkyraInternalModulationOn, g_PropertyOff, MM::Float, false, pAct);
+			CreateProperty(g_PropertySkyraInternalModulationOn, g_PropertyOff, MM::Integer, false, pAct);
+			CreateProperty("Modulation Internal On Time Help", "On Time needs to be less or equal to Period Time", MM::String, true);
 
 			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationPeriod);
-			CreateProperty(g_PropertySkyraInternalModulationPeriod, g_Default_Float, MM::Float, false, pAct);
+			CreateProperty(g_PropertySkyraInternalModulationPeriod, g_Default_Integer, MM::Integer, false, pAct);
+			CreateProperty("Modulation Internal Period Time Help", "Period Time needs to be greater or equal to On Time", MM::String, true);
 
 			pAct = new CPropertyAction (this, &Skyra::OnInternalModulationDelay);
-			CreateProperty(g_PropertySkyraInternalModulationDelay, g_Default_Float, MM::Float, false, pAct);
+			CreateProperty(g_PropertySkyraInternalModulationDelay, g_Default_Integer, MM::Integer, false, pAct);
 		}
 	} 
 
@@ -657,7 +671,7 @@ int Skyra::OnPower(MM::PropertyBase* pProp, MM::ActionType  eAct)
 {
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(std::stof(Power_,NULL));
+		pProp->Set(Power_.c_str());
 	}
 	else if (eAct == MM::AfterSet)
 	{
@@ -686,10 +700,9 @@ int Skyra::OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct )
 	if (eAct == MM::BeforeGet)
 	{
 		std::string answer;
-		double value = stof(SerialCommand(ID_ + "p?")) * 1000; 
+		double value = std::stof(SerialCommand(ID_ + "p?")) * 1000; 
 		powerSetPoint_ = std::to_string((long double)value); 
 		pProp->Set(powerSetPoint_.c_str());
-		//LogMessage("Skyra::OnPowerSetPoint " + powerSetPoint_,true);
 	} 
 
 	return DEVICE_OK;
@@ -700,7 +713,7 @@ int Skyra::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType  eAct)
 	{
 		if (nSkyra_) powerStatus_ = SerialCommand(ID_ + "glp?");
 		else  {
-			double value = stof(SerialCommand(ID_ + "pa?")) * 1000; 
+			double value = std::stof(SerialCommand(ID_ + "pa?")) * 1000; 
 			powerStatus_ = std::to_string((long double)value); 
 		}
 		pProp->Set(powerStatus_.c_str());
@@ -828,16 +841,9 @@ int Skyra::OnCurrentModulationMaximum(MM::PropertyBase* pProp, MM::ActionType eA
 	{
 		if (eAct == MM::AfterSet)
 		{
-			double currentModulationMax;
-			std::string answer;
-
-			pProp->Get(currentModulationMax);
-			if (currentModulationMax >= 0) {
-				if (currentModulationMax < std::stof(currentMaximum_)) {
-					currentModulationMaximum_ = std::to_string((long double)currentModulationMax);
-					answer = SerialCommand (ID_ + "smc " + currentModulationMaximum_);
-				}
-			}
+			pProp->Get(currentModulationMaximum_);
+			SerialCommand (ID_ + "smc " + currentModulationMaximum_);
+			SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,std::stof(currentModulationMaximum_));
 		}
 	}
 	return DEVICE_OK;
@@ -846,10 +852,12 @@ int Skyra::OnCurrentModulationMinimum(MM::PropertyBase* pProp, MM::ActionType eA
 {
 	if (eAct == MM::BeforeGet)
 	{
-		currentModulationMaximum_ = SerialCommand (ID_ + "gmc?");
 
 		MM::Property* pChildProperty = (MM::Property*)pProp;
-		if (Type_.compare(0,3,"DPL") == 0) pChildProperty->SetReadOnly(false);
+		if (Type_.compare(0,3,"DPL") == 0) {
+			pChildProperty->SetReadOnly(false);
+			currentModulationMinimum_ = SerialCommand (ID_ + "glth?");
+		}
 		else {
 			pChildProperty->SetReadOnly(true);
 			currentModulationMinimum_ = "0";
@@ -858,16 +866,9 @@ int Skyra::OnCurrentModulationMinimum(MM::PropertyBase* pProp, MM::ActionType eA
 	} else 
 		if (eAct == MM::AfterSet)
 		{
-			double currentModulationMinimum;
-			pProp->Get(currentModulationMinimum);
-
-			if (currentModulationMinimum >= 0) {
-				if (currentModulationMinimum < std::stof(currentModulationMaximum_)) {
-					currentModulationMinimum_ = std::to_string((long double)currentModulationMinimum);
-					SerialCommand (ID_ + "slth " + currentModulationMinimum_);
-				}
-				
-			}
+			pProp->Get(currentModulationMinimum_);
+			SerialCommand (ID_ + "slth " + currentModulationMinimum_);
+			SetPropertyLimits(g_PropertySkyraCurrentModulationMaximum, std::stof(currentModulationMinimum_),std::stof(currentMaximum_));
 		}
 		return DEVICE_OK;
 }
@@ -1048,18 +1049,55 @@ int Skyra::OnDigitalModulation(MM::PropertyBase* pProp, MM::ActionType  eAct)
 
 	return DEVICE_OK;
 }
-int Skyra::OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType  eAct)
+int Skyra::OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType  eAct)
 { 
-	std::string answer;
+	
 
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(std::stof(SerialCommand(ID_ + "gswmo?")));
+		nInternalModulationPeriodTime_ = std::stoi(SerialCommand(ID_ + "gswmp?"));
+		pProp->Set(nInternalModulationPeriodTime_);
+	}
+	else if (eAct == MM::AfterSet)
+	{	
+		std::string answer;
+
+		pProp->Get(answer);
+		nInternalModulationPeriodTime_ = std::stoi(answer);
+		// Limited to INT_MAX and >= On Time
+		if (nInternalModulationPeriodTime_ >= 0 && nInternalModulationPeriodTime_ <= INT_MAX) {
+				if (nInternalModulationPeriodTime_ < nInternalModulationOnTime_) {
+					nInternalModulationOnTime_ = nInternalModulationPeriodTime_;
+					SerialCommand(ID_ + "sswmo " + answer);
+				}
+				SerialCommand(ID_ + "sswmp " + answer);
+		}
+	}
+
+	return DEVICE_OK;
+}
+int Skyra::OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType  eAct)
+{ 
+
+	if (eAct == MM::BeforeGet)
+	{
+		nInternalModulationOnTime_ = std::stoi(SerialCommand(ID_ + "gswmo?"));
+		pProp->Set(nInternalModulationOnTime_);
 	}
 	else if (eAct == MM::AfterSet)
 	{
+		std::string answer;
+		// Limited to INT_MAX or OnInternalModulationPeriod, whichever is less
 		pProp->Get(answer);
-		if (std::stof(answer) >= 0) SerialCommand(ID_ + "sswmo " + answer);
+
+		nInternalModulationOnTime_ = std::stoi(answer);
+		if (nInternalModulationOnTime_ >= 0 && nInternalModulationOnTime_ <= INT_MAX) {
+			if (nInternalModulationOnTime_ > nInternalModulationPeriodTime_) {
+				nInternalModulationPeriodTime_ = nInternalModulationOnTime_;
+				SerialCommand(ID_ + "sswmp " + answer);
+			}
+			SerialCommand(ID_ + "sswmo " + answer);
+		}
 	}
 
 	return DEVICE_OK;
@@ -1070,28 +1108,13 @@ int Skyra::OnInternalModulationDelay(MM::PropertyBase* pProp, MM::ActionType  eA
 
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(std::stof(SerialCommand(ID_ + "gswmod?")));
+		pProp->Set(SerialCommand(ID_ + "gswmod?").c_str());
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		pProp->Get(answer);
-		if (std::stof(answer) >= 0) SerialCommand(ID_ + "sswmod " + answer);
-	}
-
-	return DEVICE_OK;
-}
-int Skyra::OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType  eAct)
-{ 
-	std::string answer;
-
-	if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(std::stof(SerialCommand(ID_ + "gswmp?")));
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		pProp->Get(answer);
-		if (std::stof(answer) >= 0) SerialCommand(ID_ + "sswmp " + answer);
+		int value = std::stoi(answer);
+		if (value >= 0) if (value <= INT_MAX) SerialCommand(ID_ + "sswmod " + answer);
 	}
 
 	return DEVICE_OK;
@@ -1323,7 +1346,7 @@ std::string Skyra::UpdateWaveLength(std::string id)
 	Skyra::SetProperty(g_PropertySkyraPowerOn,powerSetPoint_.c_str());
 
 	// Power Maximum
-	powerMaximum_ = SerialCommand (ID_ + "gmlc?");
+	powerMaximum_ = SerialCommand (ID_ + "gmlp?");
 	Skyra::SetProperty(g_PropertySkyraCurrentMaximum,powerMaximum_.c_str());
 
 	// Laser Type

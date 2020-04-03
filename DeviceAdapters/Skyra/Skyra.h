@@ -284,7 +284,11 @@ private:
 	bool bAnalogModulation_;
 	bool bDigitalModulation_;
 	bool bInternalModulation_;
+	long nInternalModulationOnTime_;
+	long nInternalModulationPeriodTime_;
+	long nInternalModulationPeriod_;
 	long nSkyra_;
+
 
 	std::string RA_;
 	std::string RASP_;
