@@ -599,15 +599,15 @@ int Skyra::OnControlMode(MM::PropertyBase* pProp, MM::ActionType  eAct)
 			controlMode_ = answer;
 			if (controlMode_.compare(gPropertySkyraControlModePower) == 0) {
 				SerialCommand(ID_ + "cp");
-				Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
+				SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
 			}
 			else if (controlMode_.compare(gPropertySkyraControlModeConstant) == 0) {
 				SerialCommand(ID_ + "ci");
-				Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
+				SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
 			}
 			if (controlMode_.compare(gPropertySkyraControlModeModulation) == 0) {
 				SerialCommand(ID_ + "em");
-				Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyEnabled);
+				SetProperty(g_PropertySkyraModulationStatus, g_PropertyEnabled);
 			}
 		}
 	}
@@ -688,7 +688,7 @@ int Skyra::OnPower(MM::PropertyBase* pProp, MM::ActionType  eAct)
 
 			// Switch to constant power mode if not already set that way
 			if (controlMode_.compare(gPropertySkyraControlModePower)  != 0) 
-				Skyra::SetProperty(gPropertySkyraControlMode,gPropertySkyraControlModePower);
+				SetProperty(gPropertySkyraControlMode,gPropertySkyraControlModePower);
 
 			SetPower(Power_,ID_);
 		}
@@ -803,8 +803,8 @@ int Skyra::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 						currentSetPoint_ = Current_;
 					}
 					// Switch to Current regulated mode and then set Current Level
-					Skyra::SetProperty(gPropertySkyraControlMode,gPropertySkyraControlModeConstant);
-					Skyra::SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
+					SetProperty(gPropertySkyraControlMode,gPropertySkyraControlModeConstant);
+					SetProperty(g_PropertySkyraModulationStatus, g_PropertyDisabled);
 					SerialCommand (ID_ + "slc " + Current_);
 				}
 			}
@@ -1066,11 +1066,11 @@ int Skyra::OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType  e
 		nInternalModulationPeriodTime_ = std::stoi(answer);
 		// Limited to INT_MAX and >= On Time
 		if (nInternalModulationPeriodTime_ >= 0 && nInternalModulationPeriodTime_ <= INT_MAX) {
-				if (nInternalModulationPeriodTime_ < nInternalModulationOnTime_) {
-					nInternalModulationOnTime_ = nInternalModulationPeriodTime_;
-					SerialCommand(ID_ + "sswmo " + answer);
-				}
-				SerialCommand(ID_ + "sswmp " + answer);
+			if (nInternalModulationPeriodTime_ < nInternalModulationOnTime_) {
+				nInternalModulationOnTime_ = nInternalModulationPeriodTime_;
+				SerialCommand(ID_ + "sswmo " + answer);
+			}
+			SerialCommand(ID_ + "sswmp " + answer);
 		}
 	}
 
@@ -1314,65 +1314,76 @@ std::string Skyra::SetModulation(int modulation, bool value)
 std::string Skyra::UpdateWaveLength(std::string id) 
 {
 	std::string value;
+	double dValue;
 	
 	RASP_ = GetRASP(id);
 	RA_ = GetReadAll(id);
 
-	LogMessage("Skyra::UpdateWaveLength " + id, true);
+	//LogMessage("Skyra::UpdateWaveLength " + id, true);
 
 	// update Current Values
 	// RA
-	Skyra::SetProperty(g_PropertySkyraCurrentStatus,currentStatus_.c_str());
+	SetProperty(g_PropertySkyraCurrentStatus,currentStatus_.c_str());
 
 	// RASP
-	Skyra::SetProperty(g_PropertySkyraCurrentOn,currentSetPoint_.c_str());
+	SetProperty(g_PropertySkyraCurrentOn,currentSetPoint_.c_str());
+
+	currentMaximum_ = SerialCommand (ID_ + "gmlc?");
+	dValue = std::stof(currentMaximum_);
+	// Reset Limits when switching wavelengths
+	SetPropertyLimits(g_PropertySkyraCurrent,0,dValue);
+	SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,dValue);
+	SetPropertyLimits(g_PropertySkyraCurrentModulationMaximum,0,dValue);
 
 	// Current Maximum
-	currentMaximum_ = SerialCommand (ID_ + "gmlc?");
-	Skyra::SetProperty(g_PropertySkyraCurrentMaximum,currentModulationMaximum_.c_str());
+	SetProperty(g_PropertySkyraCurrentMaximum,currentModulationMaximum_.c_str());
 	
 	// Current Modulation Maximum
 	currentModulationMaximum_ = SerialCommand (ID_ + "gmc?");
-	Skyra::SetProperty(g_PropertySkyraCurrentModulationMaximum,currentModulationMaximum_.c_str());
+	SetProperty(g_PropertySkyraCurrentModulationMaximum,currentModulationMaximum_.c_str());
 
 	// Current Modulation Minimum
 	currentModulationMinimum_ = SerialCommand (ID_ + "glth?");
-	Skyra::SetProperty(g_PropertySkyraCurrentModulationMinimum,currentModulationMinimum_.c_str());
+	SetProperty(g_PropertySkyraCurrentModulationMinimum,currentModulationMinimum_.c_str());
 			 
 	// update Power Output -- RA
-	Skyra::SetProperty(g_PropertySkyraPowerStatus,powerStatus_.c_str());
+	SetProperty(g_PropertySkyraPowerStatus,powerStatus_.c_str());
 
 	// update Power Setting -- RASP
-	Skyra::SetProperty(g_PropertySkyraPowerOn,powerSetPoint_.c_str());
+	SetProperty(g_PropertySkyraPowerOn,powerSetPoint_.c_str());
 
 	// Power Maximum
 	powerMaximum_ = SerialCommand (ID_ + "gmlp?");
-	Skyra::SetProperty(g_PropertySkyraCurrentMaximum,powerMaximum_.c_str());
+	// Set Property Limits for Power
+	dValue = std::stof(powerMaximum_);
+	SetPropertyLimits(g_PropertySkyraPower,0,dValue);
+	
+	SetProperty(g_PropertySkyraCurrentMaximum,powerMaximum_.c_str());
 
 	// Laser Type
 	// get default type if not Skyra
 	Type_ = SerialCommand(id + "glm?");
 	if (Type_.length() > 3) Type_.resize(3);
 
-	Skyra::SetProperty(g_PropertySkyraLaserType,Type_.c_str());
+	SetProperty(g_PropertySkyraLaserType,Type_.c_str());
 
 	// update active status
 	value = SerialCommand(id + "gla? ");
-	if (value.compare("0") == 0) Skyra::SetProperty(g_PropertySkyraActiveStatus, g_PropertyInactive);
-	else if (value.compare("1") == 0) Skyra::SetProperty(g_PropertySkyraActiveStatus, g_PropertyActive);
+	if (value.compare("0") == 0) SetProperty(g_PropertySkyraActiveStatus, g_PropertyInactive);
+	else if (value.compare("1") == 0) SetProperty(g_PropertySkyraActiveStatus, g_PropertyActive);
 	
 	// Control Mode
-	Skyra::SetProperty(gPropertySkyraControlMode, controlMode_.c_str());
+	SetProperty(gPropertySkyraControlMode, controlMode_.c_str());
 
 	// update modulation status
-	if (bAnalogModulation_) Skyra::SetProperty(g_PropertySkyraAnalogModulation, g_PropertyEnabled);
-	else Skyra::SetProperty(g_PropertySkyraAnalogModulation, g_PropertyDisabled);
+	if (bAnalogModulation_) SetProperty(g_PropertySkyraAnalogModulation, g_PropertyEnabled);
+	else SetProperty(g_PropertySkyraAnalogModulation, g_PropertyDisabled);
 
-	if (bDigitalModulation_) Skyra::SetProperty(g_PropertySkyraDigitalModulation, g_PropertyEnabled);
-	else  Skyra::SetProperty(g_PropertySkyraDigitalModulation, g_PropertyDisabled);
+	if (bDigitalModulation_) SetProperty(g_PropertySkyraDigitalModulation, g_PropertyEnabled);
+	else  SetProperty(g_PropertySkyraDigitalModulation, g_PropertyDisabled);
 
-	if (bInternalModulation_) Skyra::SetProperty(g_PropertySkyraInternalModulation, g_PropertyEnabled);
-	else Skyra::SetProperty(g_PropertySkyraInternalModulation, g_PropertyDisabled);
+	if (bInternalModulation_) SetProperty(g_PropertySkyraInternalModulation, g_PropertyEnabled);
+	else SetProperty(g_PropertySkyraInternalModulation, g_PropertyDisabled);
 
 	return value;
 
