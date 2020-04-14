@@ -323,9 +323,18 @@ AC_MSG_CHECKING(for ITC)
 AM_CONDITIONAL([BUILD_ITC],[test -f "/usr/local/include/ITC18.h"])
 if test -f "/usr/local/include/ITC18.h" ; then
    AC_MSG_RESULT([found])
+   if test -z "$LIBITC18"; then
+      case $host in
+         *-*-linux*)
+            LIBITC18="-litc18"
+            ;;
+      esac
+   fi
 else
    AC_MSG_RESULT([not found])
 fi
+
+AC_SUBST(LIBITC18)
 
 
 # MessagePack
@@ -539,6 +548,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    SerialManager
    SimpleAutofocus
    SimpleCam
+   Skyra
    SmarActHCU-3D
    SpectralLMM5
    Spot
